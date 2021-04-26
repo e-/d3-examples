@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>D3.js Playground</title>
+</head>
+
+<body>
+  <div>
+    X:
+    <select id="x-variable">
+      <option value="petal.length" selected>Petal Length</option>
+      <option value="petal.width">Petal Width</option>
+      <option value="sepal.length">Sepal Length</option>
+      <option value="sepal.width">Sepal Width</option>
+    </select>
+  </div>
+  <div>
+    Y:
+    <select id="y-variable">
+      <option value="petal.length">Petal Length</option>
+      <option value="petal.width" selected>Petal Width</option>
+      <option value="sepal.length">Sepal Length</option>
+      <option value="sepal.width">Sepal Width</option>
+    </select>
+  </div>
+  <svg id="svg"></svg>
+
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+  <script>
+    let svg; // for <svg>
+    let container; // <g> for circles
+    let xAxis; // <g> for the x axis
+    let yAxis; // <g> for the y axis
+    let legend; // <g> for the legend
+
+    let width = 400, height = 400;
+    let margin = { top: 10, right: 10, bottom: 40, left: 40 };
+    let data; // global data
+    let xScale, yScale, zScale;
+
+    function initialize() {
+      svg = d3.select("#svg");
+      container = svg.append("g");
+      xAxis = svg.append("g");
+      yAxis = svg.append("g");
+      legend = svg.append("g");
+
+      xScale = d3.scaleLinear();
+      yScale = d3.scaleLinear();
+      zScale = d3.scaleOrdinal().domain(["Setosa", "Versicolor", "Virginica"]).range(d3.schemeCategory10)
+
+      svg
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+      container.attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      d3.select("#x-variable").on("change", update);
+      d3.select("#y-variable").on("change", update);
+    }
+
+    function update() {
+      let xVar = d3.select("#x-variable").node().value;
+      let yVar = d3.select("#y-variable").node().value;
+
+      xScale = d3.scaleLinear().domain(d3.extent(data, d => d[xVar])).range([0, width]);
+      yScale = d3.scaleLinear().domain(d3.extent(data, d => d[yVar])).range([height, 0]);
+
+      container.selectAll("circle")
+        .data(data)
+        .join("circle")
+        .transition()
+        .attr("cx", d => xScale(d[xVar]))
+        .attr("cy", d => yScale(d[yVar]))
+        .attr("fill", d => zScale(d.variety))
+        .attr("r", 3) // for visibility
+
+      xAxis
+        .attr("transform", `translate(${margin.left}, ${margin.top + height})`)
+        .transition()
+        .call(d3.axisBottom(xScale));
+
+      yAxis
+        .attr("transform", `translate(${margin.left}, ${margin.top})`)
+        .transition()
+        .call(d3.axisLeft(yScale));
+
+      legend
+        .attr("transform", "translate(370, 320)")
+        .call(d3.legendColor().scale(zScale))
+    }
+
+    d3.csv("https://gist.githubusercontent.com/netj/8836201/raw/6f9306ad21398ea43cba4f7d537619d0e07d5ae3/iris.csv")
+      .then(csvData => {
+        csvData.forEach(d => {
+          d["petal.length"] = +d["petal.length"];
+          d["petal.width"] = +d["petal.width"];
+          d["sepal.length"] = +d["sepal.length"];
+          d["sepal.width"] = +d["sepal.width"];
+        });
+
+        data = csvData;
+        initialize();
+        update();
+      })
+  </script>
+</body>
+
+</html>
