@@ -24,12 +24,13 @@
       <option value="sepal.width">Sepal Width</option>
     </select>
   </div>
+
   <svg id="svg"></svg>
 
   <script src="https://d3js.org/d3.v6.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
   <script>
-    let svg; // for <svg>
+    let svg; // the main container, <svg>
     let container; // <g> for circles
     let xAxis; // <g> for the x axis
     let yAxis; // <g> for the y axis
@@ -37,8 +38,9 @@
 
     let width = 400, height = 400;
     let margin = { top: 10, right: 10, bottom: 40, left: 40 };
-    let data; // global data
+    let data; // loaded data
     let xScale, yScale, zScale;
+
 
     function initialize() {
       svg = d3.select("#svg");
@@ -65,6 +67,8 @@
       let xVar = d3.select("#x-variable").node().value;
       let yVar = d3.select("#y-variable").node().value;
 
+      // ..
+
       xScale = d3.scaleLinear().domain(d3.extent(data, d => d[xVar])).range([0, width]);
       yScale = d3.scaleLinear().domain(d3.extent(data, d => d[yVar])).range([height, 0]);
 
@@ -75,7 +79,7 @@
         .attr("cx", d => xScale(d[xVar]))
         .attr("cy", d => yScale(d[yVar]))
         .attr("fill", d => zScale(d.variety))
-        .attr("r", 3) // for visibility
+        .attr("r", 3)
 
       xAxis
         .attr("transform", `translate(${margin.left}, ${margin.top + height})`)
@@ -105,6 +109,12 @@
         initialize();
         update();
       })
+
+
+
+
+
+
   </script>
 </body>
 

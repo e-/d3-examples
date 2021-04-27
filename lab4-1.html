@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>D3.js Playground</title>
+</head>
+
+<body>
+  <svg id="svg"></svg>
+
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <script>
+    let width = 400, height = 400;
+    let margin = { top: 10, right: 10, bottom: 40, left: 40 };
+
+    d3.csv("https://gist.githubusercontent.com/netj/8836201/raw/6f9306ad21398ea43cba4f7d537619d0e07d5ae3/iris.csv")
+      .then(csvData => {
+        csvData.forEach(d => {
+          d["petal.length"] = +d["petal.length"];
+          d["petal.width"] = +d["petal.width"];
+          d["sepal.length"] = +d["sepal.length"];
+          d["sepal.width"] = +d["sepal.width"];
+        });
+
+        let varieties = ["Setosa", "Versicolor", "Virginica"];
+        let yVar = "petal.length";
+
+        let data = varieties.map(v => {
+          return {
+            variety: v,
+            mean: d3.mean(csvData.filter(d => d.variety === v), d => d[yVar])
+          }
+        })
+
+        let svg = d3.select("#svg");
+        let container = svg.append("g");
+
+        svg
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom);
+
+        container.attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+        let x = d3.scaleBand().domain(varieties).range([0, width]).padding(0.3);
+        let y = d3.scaleLinear().domain([0, d3.max(data, d => d.mean)]).range([height, 0]);
+        let z = d3.scaleOrdinal().domain(varieties).range(d3.schemeCategory10);
+
+        container.selectAll("rect")
+          .data(data)
+          .join("rect")
+          .attr("x", d => x(d.variety))
+          .attr("y", d => y(d.mean))
+          .attr("width", x.bandwidth())
+          .attr("height", d => height - y(d.mean))
+          .attr("fill", d => z(d.variety))
+
+        svg.append("g")
+          .attr("transform", `translate(${margin.left}, ${margin.top + height})`)
+          .transition()
+          .call(d3.axisBottom(x));
+
+        svg.append("g")
+          .attr("transform", `translate(${margin.left}, ${margin.top})`)
+          .transition()
+          .call(d3.axisLeft(y));
+
+      });
+
+  </script>
+</body>
+
+</html>
