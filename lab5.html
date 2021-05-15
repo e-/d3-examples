@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>D3.js Playground</title>
+</head>
+
+<body>
+  <div>
+    X:
+    <select id="x-variable">
+      <option value="petal.length" selected>Petal Length</option>
+      <option value="petal.width">Petal Width</option>
+      <option value="sepal.length">Sepal Length</option>
+      <option value="sepal.width">Sepal Width</option>
+    </select>
+  </div>
+  <div>
+    Y:
+    <select id="y-variable">
+      <option value="petal.length">Petal Length</option>
+      <option value="petal.width" selected>Petal Width</option>
+      <option value="sepal.length">Sepal Length</option>
+      <option value="sepal.width">Sepal Width</option>
+    </select>
+  </div>
+  <div>
+    <button id="reset">Reset zoom</button>
+  </div>
+  <svg id="svg"></svg>
+
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+
+  <script>
+    let svg;
+    let marginContainer, zoomContainer;
+    let xAxis, yAxis;
+
+    let width = 400, height = 400;
+    let margin = { top: 10, right: 10, bottom: 40, left: 40 };
+    let data;
+    let xScale, yScale, zScale;
+    let zoom;
+
+    function resetZoom() {
+      svg.call(zoom.transform, d3.zoomIdentity);
+    }
+
+    function initialize() {
+      svg = d3.select("#svg");
+
+      marginContainer = svg.append("g");
+      zoomContainer = marginContainer.append("g");
+
+      xAxis = svg.append("g")
+        .attr("transform", `translate(${margin.left}, ${margin.top + height})`);
+
+      yAxis = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+      xScale = d3.scaleLinear();
+      yScale = d3.scaleLinear();
+      zScale = d3.scaleOrdinal().domain(["Setosa", "Versicolor", "Virginica"]).range(d3.schemeCategory10)
+
+      svg
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom);
+
+      svg.append("defs")
+        .append("clipPath")
+        .attr("id", "clip")
+        .append("rect")
+        .attr("x", 0)
+        .attr("y", 0)
+        .attr("width", width)
+        .attr("height", height);
+
+      marginContainer
+        .attr("transform", `translate(${margin.left}, ${margin.top})`)
+        .attr("clip-path", "url(#clip)");
+
+      d3.select("#x-variable").on("change", update);
+      d3.select("#y-variable").on("change", update);
+
+      zoom = d3.zoom()
+        .extent([[0, 0], [width, height]])
+        .scaleExtent([1, 8])
+        .on("zoom", (zoomObj) => {
+          let transform = zoomObj.transform;
+          zoomContainer.attr("transform", transform);
+          xAxis.call(d3.axisBottom(transform.rescaleX(xScale)));
+          yAxis.call(d3.axisLeft(transform.rescaleY(yScale)));
+        });
+
+
+      svg.call(zoom);
+
+      d3.select("#reset").on("click", resetZoom);
+    }
+
+    function update() {
+      let xVar = d3.select("#x-variable").node().value;
+      let yVar = d3.select("#y-variable").node().value;
+
+      resetZoom();
+
+      xScale = d3.scaleLinear().domain(d3.extent(data, d => d[xVar])).range([0, width]);
+      yScale = d3.scaleLinear().domain(d3.extent(data, d => d[yVar])).range([height, 0]);
+
+      zoomContainer.selectAll("circle")
+        .data(data)
+        .join("circle")
+        .attr("cx", d => xScale(d[xVar]))
+        .attr("cy", d => yScale(d[yVar]))
+        .attr("fill", d => zScale(d.variety))
+        .attr("r", 3)
+
+      xAxis
+        .call(d3.axisBottom(xScale));
+
+      yAxis
+        .call(d3.axisLeft(yScale));
+    }
+
+    d3.csv("https://gist.githubusercontent.com/netj/8836201/raw/6f9306ad21398ea43cba4f7d537619d0e07d5ae3/iris.csv")
+      .then(csvData => {
+        csvData.forEach(d => {
+          d["petal.length"] = +d["petal.length"];
+          d["petal.width"] = +d["petal.width"];
+          d["sepal.length"] = +d["sepal.length"];
+          d["sepal.width"] = +d["sepal.width"];
+        });
+
+        data = csvData;
+        initialize();
+        update();
+      })
+  </script>
+</body>
+
+</html>
