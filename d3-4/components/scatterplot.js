@@ -63,6 +63,12 @@ class Scatterplot {
                                 element: this.tooltip.select(".tooltip-arrow").node(),
                             },
                         },
+                        {
+                            name: 'offset',
+                            options: {
+                                offset: [0, 10],
+                            },
+                        },
                     ],
                 });
 
